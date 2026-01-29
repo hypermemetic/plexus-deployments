@@ -1,0 +1,110 @@
+version: '3.8'
+
+# Development Stack - Mount synapse from host
+# This configuration mounts your host-installed synapse into containers
+#
+# Prerequisites:
+# 1. Install synapse on host: cabal install synapse
+# 2. Set SYNAPSE_BIN in .env or export it
+#
+# Benefits:
+# - Use your existing synapse installation
+# - Zero image bloat
+# - Easy to update (just update on host)
+
+services:
+  substrate:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.substrate
+    image: substrate-hub:dev
+    container_name: substrate-dev
+    ports:
+      - "${SUBSTRATE_PORT:-4444}:4444"
+    networks:
+      - substrate-net
+    volumes:
+      # Mount synapse from host
+      - ${SYNAPSE_BIN:-~/.cabal/bin/synapse}:/usr/local/bin/synapse:ro
+      # Optional: mount source for live development
+      # - ${SUBSTRATE_PATH:-../../substrate}/src:/app/src:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-debug}
+      - RUST_BACKTRACE=1
+    restart: unless-stopped
+
+  registry:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.registry
+    image: registry:dev
+    container_name: registry-dev
+    ports:
+      - "${REGISTRY_PORT:-4445}:4445"
+    networks:
+      - substrate-net
+    volumes:
+      - registry-config:/config
+      - registry-data:/data
+      # Mount synapse from host
+      - ${SYNAPSE_BIN:-~/.cabal/bin/synapse}:/usr/local/bin/synapse:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-debug}
+      - RUST_BACKTRACE=1
+    restart: unless-stopped
+
+  auth-hub:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.auth-hub
+    image: auth-hub:dev
+    container_name: auth-hub-dev
+    ports:
+      - "${AUTH_HUB_PORT:-4446}:4446"
+    networks:
+      - substrate-net
+    volumes:
+      - ${SECRETS_DIR:-./secrets}:/config/auth-hub
+      # Mount synapse from host
+      - ${SYNAPSE_BIN:-~/.cabal/bin/synapse}:/usr/local/bin/synapse:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-debug}
+      - RUST_BACKTRACE=1
+      - HOME=/config
+    restart: unless-stopped
+
+networks:
+  substrate-net:
+    driver: bridge
+
+volumes:
+  registry-config:
+    driver: local
+  registry-data:
+    driver: local
+
+# Usage:
+#
+# 1. Find your synapse binary:
+#    which synapse
+#    # Example: /home/user/.cabal/bin/synapse
+#
+# 2. Set it in .env:
+#    echo "SYNAPSE_BIN=/home/user/.cabal/bin/synapse" >> .env
+#
+# 3. Start services:
+#    docker-compose -f docker-compose.dev.yml up -d
+#
+# 4. Use synapse:
+#    docker-compose exec substrate synapse -P 4444 plexus health check
+#
+# 5. Update synapse (on host):
+#    cd ~/path/to/synapse
+#    git pull
+#    cabal install
+#    # Containers automatically use updated version!
+#
+# Notes:
+# - Linux only (binary must be compatible with Alpine)
+# - If synapse depends on shared libs, may need to mount those too
+# - For development convenience, uses debug logging

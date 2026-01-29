@@ -1,0 +1,151 @@
+version: '3.8'
+
+# Standard Stack with Shared Synapse Binary
+# This configuration adds synapse to all containers via a shared volume
+#
+# Total image size: ~73MB (services only, synapse shared separately)
+# Synapse: Built once, shared via volume
+
+volumes:
+  synapse-bin:
+    driver: local
+  registry-config:
+    driver: local
+  registry-data:
+    driver: local
+
+services:
+  # Initialize synapse binary in shared volume
+  synapse-init:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.synapse
+    image: synapse:latest
+    container_name: synapse-init
+    volumes:
+      - synapse-bin:/synapse-output
+    # Copy synapse to shared volume and exit
+    command: >
+      sh -c "
+        echo 'Copying synapse to shared volume...';
+        cp /usr/local/bin/synapse /synapse-output/synapse;
+        chmod +x /synapse-output/synapse;
+        echo 'Synapse ready at /synapse-output/synapse';
+        ls -lh /synapse-output/synapse;
+      "
+    restart: "no"
+    networks:
+      - substrate-net
+
+  substrate:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.substrate
+    image: substrate-hub:latest
+    container_name: substrate
+    ports:
+      - "${SUBSTRATE_PORT:-4444}:4444"
+    networks:
+      - substrate-net
+    volumes:
+      # Mount synapse binary from shared volume
+      - synapse-bin:/opt/synapse:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+      # Add /opt/synapse to PATH so synapse is available
+      - PATH=/opt/synapse:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4444"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      synapse-init:
+        condition: service_completed_successfully
+
+  registry:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.registry
+    image: registry:latest
+    container_name: registry
+    ports:
+      - "${REGISTRY_PORT:-4445}:4445"
+    networks:
+      - substrate-net
+    volumes:
+      - registry-config:/config
+      - registry-data:/data
+      # Mount synapse binary from shared volume
+      - synapse-bin:/opt/synapse:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+      - PATH=/opt/synapse:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4445"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      synapse-init:
+        condition: service_completed_successfully
+
+  auth-hub:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.auth-hub
+    image: auth-hub:latest
+    container_name: auth-hub
+    ports:
+      - "${AUTH_HUB_PORT:-4446}:4446"
+    networks:
+      - substrate-net
+    volumes:
+      - ${SECRETS_DIR:-./secrets}:/config/auth-hub
+      # Mount synapse binary from shared volume
+      - synapse-bin:/opt/synapse:ro
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+      - HOME=/config
+      - PATH=/opt/synapse:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4446"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    depends_on:
+      synapse-init:
+        condition: service_completed_successfully
+
+networks:
+  substrate-net:
+    driver: bridge
+
+# Usage:
+#
+# 1. Start all services (synapse-init runs first automatically):
+#    docker-compose -f docker-compose.synapse-shared.yml up -d
+#
+# 2. Use synapse from any container:
+#    docker-compose exec substrate synapse -P 4444 plexus health check
+#    docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix ""
+#
+# 3. Check synapse is available:
+#    docker-compose exec substrate which synapse
+#    docker-compose exec substrate synapse --help
+#
+# How it works:
+# - synapse-init container builds/copies synapse to shared volume
+# - All services mount that volume at /opt/synapse
+# - PATH includes /opt/synapse so synapse command is available
+# - synapse-init exits after copying (restart: "no")
+# - Services wait for synapse-init to complete (depends_on)
+#
+# Benefits:
+# - Service images remain small (~73MB total)
+# - Synapse built once, shared everywhere
+# - No network downloads on startup
+# - Survives container restarts
