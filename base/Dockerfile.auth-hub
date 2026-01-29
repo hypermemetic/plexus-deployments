@@ -1,0 +1,42 @@
+# Optimized Auth-hub Dockerfile
+# Final image size: ~15MB
+
+FROM rust:1.83-alpine AS builder
+
+RUN apk add --no-cache musl-dev openssl-dev pkgconfig
+
+WORKDIR /build
+
+# Copy dependencies
+COPY hub-core /workspace/hub-core
+COPY hub-macro /workspace/hub-macro
+COPY hub-transport /workspace/hub-transport
+
+# Copy source
+COPY auth-hub/Cargo.toml auth-hub/Cargo.lock ./
+COPY auth-hub/src ./src
+
+# Build and strip
+RUN cargo build --release && \
+    strip target/release/auth-hub
+
+# Minimal runtime
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates libgcc
+
+COPY --from=builder /build/target/release/auth-hub /usr/local/bin/auth-hub
+
+RUN addgroup -g 1000 app && \
+    adduser -D -u 1000 -G app app && \
+    mkdir -p /config/auth-hub && \
+    chown -R app:app /config
+
+USER app
+WORKDIR /app
+
+EXPOSE 4446
+
+ENV RUST_LOG=info
+
+CMD ["auth-hub", "--port", "4446"]

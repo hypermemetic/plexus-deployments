@@ -1,0 +1,42 @@
+# Optimized Registry Dockerfile
+# Final image size: ~18MB
+
+FROM rust:1.83-alpine AS builder
+
+RUN apk add --no-cache musl-dev openssl-dev pkgconfig
+
+WORKDIR /build
+
+# Copy dependencies
+COPY hub-core /workspace/hub-core
+COPY hub-macro /workspace/hub-macro
+COPY hub-transport /workspace/hub-transport
+
+# Copy source
+COPY registry/Cargo.toml registry/Cargo.lock ./
+COPY registry/src ./src
+
+# Build and strip
+RUN cargo build --release && \
+    strip target/release/registry
+
+# Minimal runtime
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates libgcc sqlite-libs
+
+COPY --from=builder /build/target/release/registry /usr/local/bin/registry
+
+RUN addgroup -g 1000 app && \
+    adduser -D -u 1000 -G app app && \
+    mkdir -p /data /config && \
+    chown -R app:app /data /config
+
+USER app
+WORKDIR /data
+
+EXPOSE 4445
+
+ENV RUST_LOG=info
+
+CMD ["registry"]

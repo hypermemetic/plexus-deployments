@@ -1,0 +1,54 @@
+# Optimized Substrate Dockerfile
+# Multi-stage build for minimal final image size
+
+# Build stage
+FROM rust:1.83-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache \
+    musl-dev \
+    openssl-dev \
+    pkgconfig
+
+WORKDIR /build
+
+# Copy workspace files (for path dependencies)
+COPY hub-core /workspace/hub-core
+COPY hub-macro /workspace/hub-macro
+COPY hub-transport /workspace/hub-transport
+COPY hyperforge /workspace/hyperforge
+COPY jsexec /workspace/jsexec
+
+# Copy substrate source
+COPY substrate/Cargo.toml substrate/Cargo.lock ./
+COPY substrate/src ./src
+
+# Build release binary with optimizations
+RUN cargo build --release && \
+    strip target/release/substrate target/release/mcp-gateway
+
+# Runtime stage - minimal
+FROM alpine:3.19
+
+# Install only runtime dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    libgcc \
+    sqlite-libs
+
+# Copy binary from builder
+COPY --from=builder /build/target/release/substrate /usr/local/bin/substrate
+COPY --from=builder /build/target/release/mcp-gateway /usr/local/bin/mcp-gateway
+
+# Create non-root user
+RUN addgroup -g 1000 app && \
+    adduser -D -u 1000 -G app app
+
+USER app
+WORKDIR /data
+
+EXPOSE 4444 4445
+
+ENV RUST_LOG=info
+
+CMD ["substrate", "--port", "4444", "--no-mcp"]
