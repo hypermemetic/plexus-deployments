@@ -1,0 +1,38 @@
+# Docker Compose Override for Local Development
+# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
+# Use this for local development with custom paths to your repos
+
+version: '3.8'
+
+services:
+  substrate:
+    build:
+      context: ${SUBSTRATE_PATH:-../../substrate}
+      dockerfile: ${SUBSTRATE_PATH:-../../substrate}/Dockerfile
+      args:
+        - HUB_CORE_PATH=${HUB_CORE_PATH:-../../hub-core}
+        - HUB_MACRO_PATH=${HUB_MACRO_PATH:-../../hub-macro}
+        - HUB_TRANSPORT_PATH=${HUB_TRANSPORT_PATH:-../../hub-transport}
+        - HYPERFORGE_PATH=${HYPERFORGE_PATH:-../../hyperforge}
+        - JSEXEC_PATH=${JSEXEC_PATH:-../../jsexec}
+    # Uncomment to mount source for live development
+    # volumes:
+    #   - ${SUBSTRATE_PATH:-../../substrate}/src:/app/src:ro
+
+  registry:
+    build:
+      context: ${REGISTRY_PATH:-../../registry}
+      dockerfile: ${REGISTRY_PATH:-../../registry}/Dockerfile
+      args:
+        - HUB_CORE_PATH=${HUB_CORE_PATH:-../../hub-core}
+        - HUB_MACRO_PATH=${HUB_MACRO_PATH:-../../hub-macro}
+        - HUB_TRANSPORT_PATH=${HUB_TRANSPORT_PATH:-../../hub-transport}
+
+  auth-hub:
+    build:
+      context: ${AUTH_HUB_PATH:-../../auth-hub}
+      dockerfile: ${AUTH_HUB_PATH:-../../auth-hub}/Dockerfile
+      args:
+        - HUB_CORE_PATH=${HUB_CORE_PATH:-../../hub-core}
+        - HUB_MACRO_PATH=${HUB_MACRO_PATH:-../../hub-macro}
+        - HUB_TRANSPORT_PATH=${HUB_TRANSPORT_PATH:-../../hub-transport}

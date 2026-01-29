@@ -1,0 +1,61 @@
+# Base image with Haskell/Cabal and Synapse pre-installed
+# This image is used as the foundation for all substrate ecosystem services
+
+FROM debian:bookworm-slim AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    libgmp-dev \
+    libffi-dev \
+    libncurses-dev \
+    libtinfo-dev \
+    zlib1g-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install GHCup and Haskell toolchain
+ENV BOOTSTRAP_HASKELL_NONINTERACTIVE=1
+ENV BOOTSTRAP_HASKELL_GHC_VERSION=9.6.7
+ENV BOOTSTRAP_HASKELL_CABAL_VERSION=3.10.2.1
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://get-ghcup.haskell.org | sh
+
+ENV PATH="/root/.ghcup/bin:/root/.cabal/bin:${PATH}"
+
+# Clone and build synapse
+WORKDIR /build
+COPY synapse /build/synapse
+
+RUN cd synapse && \
+    cabal update && \
+    cabal build && \
+    cabal install
+
+# Runtime image
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libgmp10 \
+    libffi8 \
+    libncurses6 \
+    libtinfo6 \
+    netcat-openbsd \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy synapse binary from builder
+COPY --from=builder /root/.local/bin/synapse /usr/local/bin/synapse
+
+# Verify synapse is installed
+RUN synapse --help || echo "Synapse installed"
+
+# Create app user
+RUN useradd -m -u 1000 app
+
+WORKDIR /app
+USER app
+
+CMD ["/bin/bash"]

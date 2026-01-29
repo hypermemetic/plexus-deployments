@@ -1,0 +1,28 @@
+version: '3.8'
+
+# Minimal Stack - Just Substrate Hub
+# Perfect for development or when you only need the core hub
+
+services:
+  substrate:
+    build:
+      context: ${SUBSTRATE_PATH:-../../substrate}
+      dockerfile: Dockerfile
+    image: substrate-hub:latest
+    container_name: substrate-minimal
+    ports:
+      - "${SUBSTRATE_PORT:-4444}:4444"
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4444"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=${RUST_LOG:-info}
+    networks:
+      - substrate-net
+
+networks:
+  substrate-net:
+    driver: bridge

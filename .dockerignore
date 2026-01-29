@@ -1,0 +1,50 @@
+# Build artifacts
+target/
+**/target/
+*.rlib
+*.so
+*.dylib
+*.dll
+
+# Git
+.git/
+.gitignore
+**/.git/
+**/.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+tests/
+**/tests/
+
+# Documentation
+docs/
+**/docs/
+*.md
+!README.md
+
+# Examples
+examples/
+**/examples/
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Misc
+.DS_Store
+*.log
+output.log
+**/output.log
+
+# Container specific
+docker-compose.yml
+Dockerfile*
+.dockerignore
+secrets/

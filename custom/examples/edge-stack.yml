@@ -1,0 +1,58 @@
+version: '3.8'
+
+# Edge Stack - Optimized for edge/low-resource environments
+# Includes only essential services with minimal footprint
+
+services:
+  # Substrate Hub with limited activations
+  substrate:
+    build:
+      context: ${SUBSTRATE_PATH:-../../../substrate}
+      dockerfile: Dockerfile
+    image: substrate-hub:edge
+    container_name: substrate-edge
+    ports:
+      - "4444:4444"
+    environment:
+      - RUST_LOG=warn  # Reduced logging
+      - SUBSTRATE_MINIMAL=true
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.5'
+    restart: unless-stopped
+    networks:
+      - substrate-net
+
+  # Auth Hub for essential secret management
+  auth-hub:
+    build:
+      context: ${AUTH_HUB_PATH:-../../../auth-hub}
+      dockerfile: Dockerfile
+    image: auth-hub:edge
+    container_name: auth-hub-edge
+    ports:
+      - "4446:4446"
+    volumes:
+      - ./secrets:/config/auth-hub
+    environment:
+      - RUST_LOG=warn
+      - HOME=/config
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+          cpus: '0.25'
+    restart: unless-stopped
+    networks:
+      - substrate-net
+
+networks:
+  substrate-net:
+    driver: bridge
+
+# Total resource usage:
+# Memory: ~384MB
+# CPU: ~0.75 cores
+# Perfect for Raspberry Pi, edge devices, or constrained environments

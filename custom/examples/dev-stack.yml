@@ -1,0 +1,80 @@
+version: '3.8'
+
+# Development Stack - With additional dev tools
+# Includes debug tools, hot-reload, and development utilities
+
+services:
+  substrate:
+    build:
+      context: ${SUBSTRATE_PATH:-../../../substrate}
+      dockerfile: Dockerfile
+      args:
+        - BUILD_TYPE=debug
+    image: substrate-hub:dev
+    container_name: substrate-dev
+    ports:
+      - "4444:4444"
+      - "9229:9229"  # Debug port
+    volumes:
+      # Mount source for hot-reload
+      - ${SUBSTRATE_PATH:-../../../substrate}/src:/app/src:ro
+    environment:
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=1
+    restart: unless-stopped
+    networks:
+      - substrate-net
+
+  registry:
+    build:
+      context: ${REGISTRY_PATH:-../../../registry}
+      dockerfile: Dockerfile
+    image: registry:dev
+    container_name: registry-dev
+    ports:
+      - "4445:4445"
+    volumes:
+      - ${REGISTRY_PATH:-../../../registry}/src:/app/src:ro
+    environment:
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=1
+    restart: unless-stopped
+    networks:
+      - substrate-net
+
+  auth-hub:
+    build:
+      context: ${AUTH_HUB_PATH:-../../../auth-hub}
+      dockerfile: Dockerfile
+    image: auth-hub:dev
+    container_name: auth-hub-dev
+    ports:
+      - "4446:4446"
+    volumes:
+      - ./secrets:/config/auth-hub
+      - ${AUTH_HUB_PATH:-../../../auth-hub}/src:/app/src:ro
+    environment:
+      - RUST_LOG=debug
+      - RUST_BACKTRACE=1
+      - HOME=/config
+    restart: unless-stopped
+    networks:
+      - substrate-net
+
+  # Development utilities
+  websocat:
+    image: solsson/websocat
+    container_name: websocat-dev
+    command: --help
+    networks:
+      - substrate-net
+    profiles:
+      - tools
+
+networks:
+  substrate-net:
+    driver: bridge
+
+# Usage:
+# docker-compose up -d              # Start main services
+# docker-compose --profile tools up # Include dev tools

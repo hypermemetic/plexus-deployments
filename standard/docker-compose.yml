@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Substrate Hub - Main plugin hub with 13 activations
+  substrate:
+    build:
+      context: .
+      dockerfile: substrate/Dockerfile
+    image: substrate-hub:latest
+    container_name: substrate
+    ports:
+      - "4444:4444"  # WebSocket JSON-RPC
+    networks:
+      - substrate-net
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4444"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+
+  # Registry - Backend discovery and registration
+  registry:
+    build:
+      context: .
+      dockerfile: registry/Dockerfile
+    image: registry:latest
+    container_name: registry
+    ports:
+      - "4445:4445"  # WebSocket JSON-RPC
+    networks:
+      - substrate-net
+    volumes:
+      - registry-config:/config
+      - registry-data:/data
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4445"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+
+  # Auth Hub - Secret management with YAML storage
+  auth-hub:
+    build:
+      context: .
+      dockerfile: auth-hub/Dockerfile
+    image: auth-hub:latest
+    container_name: auth-hub
+    ports:
+      - "4446:4446"  # WebSocket JSON-RPC
+    networks:
+      - substrate-net
+    volumes:
+      # Mount secrets file from host
+      - ./secrets:/config/auth-hub
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "4446"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - HOME=/config  # Point to config volume for secrets.yaml
+
+networks:
+  substrate-net:
+    driver: bridge
+
+volumes:
+  registry-config:
+    driver: local
+  registry-data:
+    driver: local
