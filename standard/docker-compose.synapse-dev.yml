@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Synapse Development Environment
+# Full Haskell toolchain with synapse source mounted for in-container development
+
+services:
+  synapse-dev:
+    build:
+      context: ${REPO_ROOT:-../..}
+      dockerfile: substrate-deployments/base/Dockerfile.synapse
+      target: builder  # Use builder stage with full Haskell toolchain
+    image: synapse-dev:latest
+    container_name: synapse-dev
+    volumes:
+      # Mount synapse source code (editable from host)
+      - ${SYNAPSE_PATH:-../../synapse}:/workspace/synapse
+      # Persist cabal cache for faster rebuilds
+      - synapse-cabal-cache:/root/.cabal
+      # Optional: mount .ghcup for toolchain persistence
+      - synapse-ghcup:/root/.ghcup
+    working_dir: /workspace/synapse
+    environment:
+      - PATH=/root/.ghcup/bin:/root/.cabal/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    # Keep container running for interactive shell access
+    command: tail -f /dev/null
+    networks:
+      - substrate-net
+    stdin_open: true
+    tty: true
+
+volumes:
+  synapse-cabal-cache:
+    driver: local
+  synapse-ghcup:
+    driver: local
+
+networks:
+  substrate-net:
+    driver: bridge
+
+# Usage:
+#
+# 1. Start synapse dev container:
+#    docker-compose -f docker-compose.synapse-dev.yml up -d
+#
+# 2. Enter the container:
+#    docker-compose -f docker-compose.synapse-dev.yml exec synapse-dev bash
+#
+# 3. Inside container - develop synapse:
+#    cabal update
+#    cabal build
+#    cabal test
+#    cabal install
+#    synapse --help
+#
+# 4. Edit files on host:
+#    # Changes in ${SYNAPSE_PATH} (e.g., ../../synapse) appear immediately
+#    vim ../../synapse/src/Main.hs
+#
+# 5. Rebuild in container:
+#    docker-compose exec synapse-dev cabal build
+#
+# 6. Install updated binary:
+#    docker-compose exec synapse-dev cabal install
+#
+# Benefits:
+# - Full Haskell toolchain (ghc 9.6.7, cabal 3.10.2.1)
+# - Source code editable from host or inside container
+# - Cabal cache persisted (faster rebuilds)
+# - Isolated from host Haskell installation
+# - Same environment as production builds
