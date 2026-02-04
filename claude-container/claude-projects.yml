@@ -1,0 +1,81 @@
+# Hypermemetic Multi-Project Config for Claude Container
+#
+# Usage (from hypermemetic root):
+#   claude-container -s rebrand -C substrate-deployments/claude-container/claude-projects.yml
+#
+# See substrate/docs/REBRAND.md for the full rebranding plan and instructions.
+
+version: "1"
+dockerfile: ./Dockerfile
+projects:
+  # ============================================
+  # Core Framework (Foundation Layer)
+  # ============================================
+  hub-core:
+    path: ../../hub-core
+    # Core Activation trait, DynamicHub routing, MCP bridge
+
+  hub-macro:
+    path: ../../hub-macro
+    # Proc macros: function signature = schema
+
+  hub-transport:
+    path: ../../hub-transport
+    # Generic transport abstraction (WebSocket, stdio, HTTP)
+
+  hub-codegen:
+    path: ../../hub-codegen
+    # Multi-language SDK generation (TypeScript, Rust)
+
+  # ============================================
+  # Main Runtime
+  # ============================================
+  substrate:
+    path: ../../substrate
+    main: true
+    # Central orchestrator hub with plugin registry
+
+  registry:
+    path: ../../registry
+    # Service discovery and backend registration
+
+  # ============================================
+  # Plugins/Activations
+  # ============================================
+  hyperforge:
+    path: ../../hyperforge
+    # Multi-repo management plugin (v2.0.0)
+
+  jsexec:
+    path: ../../jsexec
+    # JavaScript sandbox (workerd V8 isolates)
+
+  # ============================================
+  # CLI & Clients
+  # ============================================
+  synapse:
+    path: ../../synapse
+    # Haskell schema-driven CLI
+
+  substrate-protocol:
+    path: ../../substrate-protocol
+    # Shared protocol types (Haskell)
+
+  substrate-sandbox-ts:
+    path: ../../substrate-sandbox-ts
+    # TypeScript client SDK and examples
+
+  # ============================================
+  # Code Generation
+  # ============================================
+  substrate-rust-codegen:
+    path: ../../substrate-rust-codegen
+    # Rust SDK code generation
+
+  # ============================================
+  # External Dependencies (untracked)
+  # ============================================
+  cllient:
+    path: ../../../juggernautlabs/cllient
+    track: false
+    # Rust LLM client library (required by substrate)
