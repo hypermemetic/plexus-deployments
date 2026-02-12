@@ -93,7 +93,7 @@ Since synapse is installed in all containers, you can use it from within any con
 
 ```bash
 # Execute synapse from substrate container
-docker-compose exec substrate synapse -P 4444 plexus health check
+docker-compose exec substrate synapse -P 4444 substrate health check
 
 # Execute synapse from auth-hub container
 docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix example/
@@ -103,10 +103,10 @@ docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix 
 
 ```bash
 # Substrate health check
-synapse -H localhost -P 4444 plexus health check
+synapse -H localhost -P 4444 substrate health check
 
 # List all substrate activations
-synapse -H localhost -P 4444 plexus
+synapse -H localhost -P 4444 substrate
 
 # Auth hub - set a secret
 synapse -H localhost -P 4446 secrets auth set_secret \

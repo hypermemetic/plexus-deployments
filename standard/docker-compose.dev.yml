@@ -96,7 +96,7 @@ volumes:
 #    docker-compose -f docker-compose.dev.yml up -d
 #
 # 4. Use synapse:
-#    docker-compose exec substrate synapse -P 4444 plexus health check
+#    docker-compose exec substrate synapse -P 4444 substrate health check
 #
 # 5. Update synapse (on host):
 #    cd ~/path/to/synapse

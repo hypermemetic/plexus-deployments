@@ -42,7 +42,7 @@ docker-compose --profile init up synapse-builder
 docker-compose up -d
 
 # Use synapse from any container
-docker-compose exec substrate synapse -P 4444 plexus health check
+docker-compose exec substrate synapse -P 4444 substrate health check
 ```
 
 **Pros:**
@@ -80,7 +80,7 @@ services:
 docker-compose up -d
 
 # Execute synapse commands
-docker-compose exec synapse synapse -P 4444 plexus health check
+docker-compose exec synapse synapse -P 4444 substrate health check
 docker-compose exec synapse synapse -P 4446 secrets auth list_secrets
 ```
 
@@ -280,7 +280,7 @@ services:
   test:
     image: alpine
     depends_on: [substrate, synapse]
-    command: docker exec synapse synapse -P 4444 plexus health check
+    command: docker exec synapse synapse -P 4444 substrate health check
 ```
 
 ## Comparison

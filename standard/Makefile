@@ -67,7 +67,7 @@ health: ## Check health of all services
 
 test: ## Run test commands against services
 	@echo "Testing substrate health..."
-	@docker-compose exec -T substrate synapse -P 4444 plexus health check --raw || echo "Substrate not responding"
+	@docker-compose exec -T substrate synapse -P 4444 substrate health check --raw || echo "Substrate not responding"
 	@echo ""
 	@echo "Testing auth-hub..."
 	@docker-compose exec -T auth-hub synapse -P 4446 secrets auth list_secrets --prefix "" --raw || echo "Auth-hub not responding"

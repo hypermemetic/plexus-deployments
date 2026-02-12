@@ -130,7 +130,7 @@ networks:
 #    docker-compose -f docker-compose.synapse-shared.yml up -d
 #
 # 2. Use synapse from any container:
-#    docker-compose exec substrate synapse -P 4444 plexus health check
+#    docker-compose exec substrate synapse -P 4444 substrate health check
 #    docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix ""
 #
 # 3. Check synapse is available:

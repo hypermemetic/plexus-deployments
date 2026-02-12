@@ -76,7 +76,7 @@ docker-compose ps
 docker-compose logs -f
 
 # Test substrate (if synapse installed locally)
-synapse -P 4444 plexus health check
+synapse -P 4444 substrate health check
 ```
 
 ## What You Get
@@ -95,13 +95,13 @@ synapse -P 4444 plexus health check
 
 ```bash
 # List all activations
-synapse -P 4444 plexus
+synapse -P 4444 substrate
 
 # Health check
-synapse -P 4444 plexus health check
+synapse -P 4444 substrate health check
 
 # Try the echo service
-synapse -P 4444 plexus echo once --message "Hello!"
+synapse -P 4444 substrate echo once --message "Hello!"
 ```
 
 ### Auth Hub (Standard Stack)

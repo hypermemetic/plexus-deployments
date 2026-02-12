@@ -132,7 +132,7 @@ make test
 
 # Or manually
 docker-compose up -d
-docker-compose exec substrate synapse -P 4444 plexus health check
+docker-compose exec substrate synapse -P 4444 substrate health check
 docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix ""
 ```
 

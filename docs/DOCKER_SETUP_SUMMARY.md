@@ -140,7 +140,7 @@ Once running, services are available at:
 
 ```bash
 # Substrate - health check
-synapse -H localhost -P 4444 plexus health check
+synapse -H localhost -P 4444 substrate health check
 
 # Auth Hub - manage secrets
 synapse -H localhost -P 4446 secrets auth set_secret \
@@ -151,7 +151,7 @@ synapse -H localhost -P 4446 secrets auth set_secret \
 
 ```bash
 # Execute commands inside containers
-docker-compose exec substrate synapse -P 4444 plexus health check
+docker-compose exec substrate synapse -P 4444 substrate health check
 docker-compose exec auth-hub synapse -P 4446 secrets auth list_secrets --prefix ""
 ```
 

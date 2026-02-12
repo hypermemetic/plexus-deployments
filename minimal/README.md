@@ -29,10 +29,10 @@ Once running, access substrate at `ws://localhost:4444`:
 
 ```bash
 # Using synapse (if installed locally)
-synapse -P 4444 plexus health check
+synapse -P 4444 substrate health check
 
 # Or from inside the container
-docker-compose exec substrate synapse -P 4444 plexus health check
+docker-compose exec substrate synapse -P 4444 substrate health check
 ```
 
 ## Configuration
