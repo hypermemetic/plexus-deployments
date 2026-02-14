@@ -26,6 +26,9 @@ The complete Substrate ecosystem with all core services.
 ### Minimal Stack (`minimal/`)
 Lightweight deployment with just substrate hub.
 
+### Claude Container (`claude-container/`)
+Development container for Claude Code sessions. Includes host-side scripts for exposing services (e.g., ChromeDriver) to containers. See [claude-container/README.md](claude-container/README.md).
+
 ### Custom Stacks
 Create your own by mixing services in `custom/`.
 
@@ -60,6 +63,12 @@ substrate-deployments/
 ├── minimal/                     # Minimal deployment
 │   ├── docker-compose.yml
 │   └── README.md
+├── claude-container/             # Claude Code dev container
+│   ├── Dockerfile
+│   ├── claude-projects.yml
+│   ├── README.md
+│   └── scripts/
+│       └── start-chromedriver.sh
 ├── custom/                      # Custom architecture templates
 │   └── examples/
 └── docs/                        # Documentation
