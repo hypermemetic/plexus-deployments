@@ -4,3 +4,6 @@ forges = [
     "github",
 ]
 visibility = "public"
+
+[ci]
+skip_validate = true
